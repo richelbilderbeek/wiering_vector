@@ -1,201 +1,285 @@
-#define UNSIGNED_SHORT_INT_BOUNDARY 65535
-#define STARTING_SIZE 8
-template <class T> class Vector
+#include <iostream>
+#include <fstream>
+#include "vector.h"
+#include "splitter.h"
+using namespace std;
+//#include "splitterTEMP.h"
+
+typedef unsigned short int kint;
+
+bool ontbeest = 1, in_commentaar = false;
+string VindEnVervang(string, string, string);
+
+void log(string tekst) { if(ontbeest) { cout << tekst << endl; } }
+
+bool LegeLijn(string lijn)
 {
-	public:
-		Vector(unsigned short int i = STARTING_SIZE)
+	for(kint i = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] != ' ' && lijn[i] != '\t') { return false; }
+	}
+	return true;
+}
+
+bool ZitHerErin(string lijn, string argument)
+{
+	for(kint i = 0, j = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] == argument[j]) { j++; if(j == argument.size()){ return true; } }
+		else { j = 0; }
+	}
+	return false;
+}
+
+string MacroWaarde(string s)
+{
+	string macrowaarde = "";
+	bool binnen = false;
+	for(kint i = 0; i < s.size(); i++)
+	{
+		if(s[i] == '(') { binnen = true; continue; }
+		else if(s[i] == ')') { binnen = false; break; }
+		else if(binnen) { macrowaarde += s[i]; }
+	}
+	
+	return macrowaarde;
+}
+
+bool IsMacro(string s)
+{
+	bool haakje_geopend = false, haakje_gesloten = false;
+	int p = 0;
+	if(s[0] == '(' || s[0] == ')') { return false; }
+	
+	for(kint i = 1; i < s.size(); i++)
+	{
+		if(s[i] == '(') { haakje_geopend = true; p++; }
+		else if(s[i] == ')' && haakje_geopend && i == s.size() - 1) { haakje_gesloten = true; p--; }
+	}
+	
+	if(haakje_geopend && haakje_gesloten && p == 0) { return true; }
+	else { return false; }
+	
+}
+
+string NegeerCommentaar(string lijn)
+{
+	string nieuwe_lijn = "";
+	bool in_citaat = false;
+	
+	for(kint i = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] == '"' && !in_commentaar) { in_citaat ? in_citaat = false: in_citaat = true; nieuwe_lijn += lijn[i]; }
+		else if(in_citaat) { nieuwe_lijn += lijn[i]; }
+		else if(lijn[i] == '/' && lijn[i+1] == '/') { return nieuwe_lijn; }
+		else if(lijn[i] == '/' && lijn[i+1] == '*') { in_commentaar = true; }
+		else if(lijn[i] == '*' && lijn[i+1] == '/') { in_commentaar = false; i++; }
+		else if(!in_commentaar) { nieuwe_lijn += lijn[i]; }
+	}
+	
+	return nieuwe_lijn;
+}
+
+string GeefDeelString(string lijn, kint beginpunt, kint eindpunt)
+{
+	if(beginpunt > eindpunt) { kint x = beginpunt; beginpunt = eindpunt; eindpunt = x; }
+	string nieuwe_lijn = "";
+	for(kint i = beginpunt; i <= eindpunt; i++)
+	{
+		nieuwe_lijn += lijn[i];
+	}
+	return nieuwe_lijn;
+}
+
+string ZuiverMacrowoord(string s)
+{
+	string nieuw_woord = "";
+	
+	for(kint i = 0; i < s.size(); i++)
+	{
+		nieuw_woord += s[i];
+		if(s[i] == '(') { break; }
+	}
+	
+	return nieuw_woord;
+}
+
+struct definieer
+{
+	definieer(string a = "", string b = "") { trefwoord = a; vervang_door = b; }
+	string trefwoord, vervang_door;
+};
+
+bool Vind(string lijn, string w)
+{
+	for(kint i = 0, j = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] == w[j]) { j++; if(j == w.size()){ return true; break; } }
+		else { j = 0; }
+	}
+	return false;
+}
+
+string VerkrijgMacrowoord(string lijn, string macrowoord)
+{
+	string nieuw_woord = macrowoord;
+	kint eindpositie = 0;
+	
+	for(kint i = 0, j = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] == nieuw_woord[j]) { j++; if(j == nieuw_woord.size()){ eindpositie = i+1; break; } }
+		else { j = 0; }
+	}
+	if(eindpositie == 0) { return ""; }
+	
+	for(kint i = eindpositie; i < lijn.size() ; i++)
+	{
+		nieuw_woord += lijn[i];
+		if(lijn[i] == ')') { break; }
+	}
+	
+	return nieuw_woord;
+}
+
+string VindEnVervang(string lijn, definieer doosje)
+{
+	string trefwoord = doosje.trefwoord;
+	string vervang_door = doosje.vervang_door;
+	
+	if(lijn.size() < trefwoord.size()) { return lijn; }
+	
+	string nieuwe_lijn = "";
+	for(kint i = 0; i <= lijn.size(); i++)
+	{
+		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
+		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
 		{
-			std::cout << "Constructor" << std::endl;
-			if(i > 0) { TArray = (T*) malloc(i*sizeof(T)); array_size = i; std::cout << "TArray = (T*) malloc(i*sizeof(T)); array_size = i;" << std::endl; }
-			else { TArray = (T*) malloc(STARTING_SIZE*sizeof(T)); array_size = STARTING_SIZE; std::cout << "TArray = (T*) malloc(STARTING_SIZE*sizeof(T));" << std::endl; }
-			user_given_size = array_size;
-			std::cout << "Laatste constructielijn!" << std::endl;
+			string s = GeefDeelString(lijn, i, i+trefwoord.size()-1);
+			//cout << "s is " << s << endl;
+			if(s == trefwoord) { nieuwe_lijn += vervang_door; i += trefwoord.size()-1; }
+			else { nieuwe_lijn += lijn[i]; }
 		}
-		
-		~Vector()
+		else { nieuwe_lijn += lijn[i]; }
+	}
+	
+	return nieuwe_lijn;
+}
+
+
+string VindEnVervang(string lijn, string trefwoord, string vervang_door)
+{
+	if(lijn.size() < trefwoord.size()) { return lijn; }
+	
+	string nieuwe_lijn = "";
+	for(kint i = 0; i <= lijn.size(); i++)
+	{
+		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
+		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
 		{
-			std::cout << "Destructor" << std::endl;
-			free(TArray);
-			std::cout << "free(TArray);" << std::endl;
+			string s = GeefDeelString(lijn, i, i+trefwoord.size()-1);
+			//cout << "s is " << s << endl;
+			if(s == trefwoord) { nieuwe_lijn += vervang_door; i += trefwoord.size()-1; }
+			else { nieuwe_lijn += lijn[i]; }
 		}
-		
-		bool equals(Vector v)
+		else { nieuwe_lijn += lijn[i]; }
+	}
+	
+	return nieuwe_lijn;
+}
+
+int main(int argc, char* argv[])
+{
+	if(argc >= 2) { ontbeest = atoi(argv[1]); }
+	
+	Vector<definieer> doosje;
+	Vector<definieer> doosje2;
+	
+	while(!cin.eof())
+	{
+		string code = "", macrowoord = "";
+		cout << "Geef een tekst: ";
+		getline(cin, code);
+		code = NegeerCommentaar(code);
+		if(ZitHerErin(code, "#define"))
 		{
-			if(this->sp != v.sp) { return false; }
-			for(unsigned short int i = 0; i < sp; i++)
-			{ if(this->TArray[i] != v.TArray[i]) { return false; } }
-			return true;
-		}
-		
-		void CopyOf(Vector v)
-		{
-			sp = v.sp;
-			array_size = v.array_size;
-			TArray = (T*) malloc(array_size*sizeof(T));
-			for(unsigned short int i = 0; i < sp; i++) { TArray[i] = v.TArray[i]; }
-		}
-		
-		bool push_unique(T x)
-		{
-			for(unsigned short int i = 0; i < sp; i++) { if(x == TArray[i]) { return false; } }
-			push(x); return true;
-		}
-		
-		bool add_unique(T x)
-		{
-			for(unsigned short int i = 0; i < sp; i++) { if(x == TArray[i]) { return false; } }
-			add(x); return true;
-		}
-		
-		bool insert_unique(T x)
-		{
-			for(unsigned short int i = 0; i < sp; i++) { if(x == TArray[i]) { return false; } }
-			insert(x); return true;
-		}
-		
-		void insert(T x)
-		{
-			if(sp >= array_size) { DoubleArraySize(); };
-			for(unsigned short int i = sp; i > 0; i--) { TArray[i] = TArray[i-1]; }
-			TArray[0] = x;
-			sp++;
-		}
-		
-		void push(T x)
-		{
-			if(sp >= array_size) { DoubleArraySize(); }
-			TArray[sp] = x;
-			sp++;
-		}
-		
-		void add(T x)
-		{
-			if(sp >= array_size) { DoubleArraySize(); }
-			TArray[sp] = x;
-			sp++;
-		}
-		
-		bool contains(T x)
-		{ for(unsigned short int i = 0; i < sp; i++) { if(x == TArray[i]) { return true; } } return false; }
-		
-		unsigned short int count(T x)
-		{
-			unsigned short int counter = 0;
-			for(unsigned short int i = 0; i < sp; i++) { if(x == TArray[i]) { counter++; } }
-			return counter;
-		}
-		
-		unsigned short int search(T x)
-		{
-			for(unsigned short int i = 0; i < sp; i++)
-			{ if(x == TArray[i]) { return i; } }
-			return sp;
-		}
-		
-		void remove(unsigned short int i)
-		{
-			if( i >= sp ) { return; }
-			for(unsigned short int j = i+1; j < sp; j++) { TArray[j-1] = TArray[j]; }
-			sp--;
-		}
-		
-		void removeRange(unsigned short int a, unsigned short int b)
-		{
-			if(a > b || b >= sp) { return; }
-			int range = b - a + 1;
-			for(unsigned short int j = a+range; j < sp; j++) { TArray[j-range] = TArray[j]; }
-			sp -= range;
-		}
-		
-		unsigned short int replaceAll(T x, T y)
-		{
-			unsigned short int replaced = 0;
-			for(unsigned short int i = sp - 1; i < UNSIGNED_SHORT_INT_BOUNDARY; i--)
-			{ if(x == TArray[i]) { set(i,y); replaced++; } }
-			return replaced;
-		}
-		
-		unsigned short int removeAll(T x)
-		{
-			unsigned short int removed = 0;
-			for(unsigned short int i = sp - 1; i < UNSIGNED_SHORT_INT_BOUNDARY; i--)
-			{ if(x == TArray[i]) { remove(i); removed++; } }
-			return removed;
-		}
-		
-		void wissel(unsigned short int a, unsigned short int b)
-		{ T x = index(a); T y = index(b);  set(b, x); set(a, y); }
-		
-		bool empty() { if(sp == 0) { return true; } else { return false; } }
-		bool isEmpty() { if(sp == 0) { return true; } else { return false; } }
-		void clear() { sp = 0; }
-		void deep_clear() { sp = 0; trim(); }
-		unsigned short int size() { return sp; }
-		unsigned short int length() { return sp; }
-		unsigned short int real_size() { return array_size; }
-		unsigned short int real_length() { return array_size; }
-		
-		bool mod(unsigned short int i, T x) { if(i < sp) { TArray[i] = x; return true;} return false; }
-		bool set(unsigned short int i, T x) { if(i < sp) { TArray[i] = x; return true;} return false; }
-		
-		bool trim()
-		{
-			if(sp != array_size && !(sp == 0 && array_size == 1)) { SetToSize(sp); return true; } else { return false; }
-		}
-		
-		bool resize(unsigned short int i)
-		{ if(i >= sp && i != array_size) { SetToSize(i); return true; } else { return false; } }
-		
-		T index(unsigned short int i) { if(i < sp) { return TArray[i]; } return TArray[0]; }
-		T get(unsigned short int i) { if(i < sp) { return TArray[i]; }  return TArray[0]; }
-		
-		T pop() { if(sp >= 1) { sp--; return TArray[sp]; } else { return TArray[0]; } }
-		T top() { if(sp >= 1) { return TArray[sp-1]; } else { return TArray[0]; } }
-		
-		void stats()
-		{
-			std::cout << "stack pointer: " << sp << std::endl;
-			std::cout << "real array size: " << array_size << std::endl;
-			std::cout << "user given size: " << user_given_size << std::endl << std::endl;
-		}
-		
-		void show_all()
-		{
-			for(unsigned short int i = 0; i < sp; i++)
+			Vector<string> rij = split(code);
+			if(IsMacro(rij.index(1)))
 			{
-				std::cout << i+1 << ") " << TArray[i] << std::endl;
+				rij.remove(0);
+				
+				string lichaam = "";
+				for(kint i = 1; i < rij.size(); i++)
+				{ lichaam += rij.index(i) + " "; }
+				
+				
+				doosje2.add(definieer(rij.index(0), lichaam));
+				continue;
+			}
+			else if(rij.index(0) == "#define" && rij.size() == 3)
+			{ doosje.add(definieer(rij.index(1),rij.index(2))); continue; }
+		}
+		else if(ZitHerErin(code, "#include"))
+		{
+			Vector<string> rij = split(code);
+			if(rij.index(0) == "#include" && rij.size() == 2)
+			{
+				string lijn = "";
+				ifstream bestand(rij.get(1));
+				if(bestand.is_open())
+				{
+					while(getline(bestand, lijn)) { cout << lijn << endl; }
+					bestand.close();
+				}
+				else { cout << "Kon " << rij.get(1) << " niet vinden!" << endl; }
 			}
 		}
 		
-	private:
-	
-		void SetToSize(unsigned short int new_size)
+		if(!LegeLijn(code))
 		{
-			std::cout << "SetToSize()" << std::endl;
-			if(new_size == 0) { new_size = 1; }
-			T *temp = (T*) malloc(array_size*sizeof(T));
-			for(unsigned short int i = 0; i < array_size; i++) { temp[i] = TArray[i];}
-			free(TArray); TArray = (T*) malloc(new_size*sizeof(T));
-			int t = (array_size > new_size ? new_size : array_size);
-			if(t > sp) { t = sp; }
-			for(unsigned short int i = 0; i < t; i++)
-			{ TArray[i] = temp[i]; }
-			free(temp); array_size = new_size;
+			for(kint i = 0; i < doosje.size(); i++)
+			{ code = VindEnVervang(code, doosje.get(i).trefwoord, doosje.get(i).vervang_door); }
+			
+			for(kint i = 0; i < doosje2.size(); i++)
+			{
+				string macronaam = ZuiverMacrowoord(doosje2.index(i).trefwoord);
+				if(Vind(code, macronaam))
+				{
+					string verkregen_macro = VerkrijgMacrowoord(code, macronaam);
+					string verkregen_macro_argumenten = MacroWaarde(verkregen_macro);
+					Vector<string> argumenten = split(verkregen_macro_argumenten, ' ', ',');
+					
+					string onze_macro = doosje2.index(i).trefwoord;
+					string onze_macro_argumenten = MacroWaarde(onze_macro);
+					Vector<string> onze_argumenten = split(onze_macro_argumenten, ' ', ',');
+					
+					string lichaam = doosje2.index(i).vervang_door;
+					if(argumenten.size() == onze_argumenten.size())
+					{
+						for(kint i = 0; i < argumenten.size(); i++)
+						{
+							lichaam = VindEnVervang(lichaam, onze_argumenten.index(i), argumenten.index(i));
+						}
+					}
+					
+					code = VindEnVervang(code, verkregen_macro, lichaam);
+				}
+			}
+			cout << code << endl;
 		}
+		
+		
+	}
 	
-		void DoubleArraySize()
-		{
-			std::cout << "DoubleArraySize()" << std::endl;
-			T *temp = (T*) malloc(array_size*sizeof(T));
-			for(unsigned short int i = 0; i < array_size; i++) { temp[i] = TArray[i];}
-			free(TArray); array_size *= 2;
-			TArray = (T*) malloc(array_size*sizeof(T));
-			for(unsigned short int i = 0; i < array_size / 2; i++) { TArray[i] = temp[i]; }
-			free(temp);
-		}
+	while(!cin.eof())
+	{
+		string s = "";
+		cout << "Geef een tekst: ";
+		getline(cin, s);
+		s = NegeerCommentaar(s);
+		if(!LegeLijn(s))
+		{ cout << VindEnVervang(s, "Willem", "Sjaak") << endl << endl; }
+	}
+	//cout << GeefDeelString(s, 0, 4) << endl;
 	
-		unsigned short int user_given_size = 0;
-		unsigned short int array_size = 0;
-		unsigned short int sp = 0;
-		T *TArray = (T*) malloc(STARTING_SIZE*sizeof(T));
-};
+	return 0;
+}

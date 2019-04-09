@@ -8,6 +8,7 @@ using namespace std;
 typedef unsigned short int kint;
 
 bool ontbeest = 1, in_commentaar = false;
+string VindEnVervang(string, string, string);
 
 void log(string tekst) { if(ontbeest) { cout << tekst << endl; } }
 
@@ -28,6 +29,37 @@ bool ZitHerErin(string lijn, string argument)
 		else { j = 0; }
 	}
 	return false;
+}
+
+string MacroWaarde(string s)
+{
+	string macrowaarde = "";
+	bool binnen = false;
+	for(kint i = 0; i < s.size(); i++)
+	{
+		if(s[i] == '(') { binnen = true; continue; }
+		else if(s[i] == ')') { binnen = false; break; }
+		else if(binnen) { macrowaarde += s[i]; }
+	}
+	
+	return macrowaarde;
+}
+
+bool IsMacro(string s)
+{
+	bool haakje_geopend = false, haakje_gesloten = false;
+	int p = 0;
+	if(s[0] == '(' || s[0] == ')') { return false; }
+	
+	for(kint i = 1; i < s.size(); i++)
+	{
+		if(s[i] == '(') { haakje_geopend = true; p++; }
+		else if(s[i] == ')' && haakje_geopend && i == s.size() - 1) { haakje_gesloten = true; p--; }
+	}
+	
+	if(haakje_geopend && haakje_gesloten && p == 0) { return true; }
+	else { return false; }
+	
 }
 
 string NegeerCommentaar(string lijn)
@@ -59,11 +91,55 @@ string GeefDeelString(string lijn, kint beginpunt, kint eindpunt)
 	return nieuwe_lijn;
 }
 
+string ZuiverMacrowoord(string s)
+{
+	string nieuw_woord = "";
+	
+	for(kint i = 0; i < s.size(); i++)
+	{
+		nieuw_woord += s[i];
+		if(s[i] == '(') { break; }
+	}
+	
+	return nieuw_woord;
+}
+
 struct definieer
 {
 	definieer(string a = "", string b = "") { trefwoord = a; vervang_door = b; }
 	string trefwoord, vervang_door;
 };
+
+bool Vind(string lijn, string w)
+{
+	for(kint i = 0, j = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] == w[j]) { j++; if(j == w.size()){ return true; break; } }
+		else { j = 0; }
+	}
+	return false;
+}
+
+string VerkrijgMacrowoord(string lijn, string macrowoord)
+{
+	string nieuw_woord = macrowoord;
+	kint eindpositie = 0;
+	
+	for(kint i = 0, j = 0; i < lijn.size(); i++)
+	{
+		if(lijn[i] == nieuw_woord[j]) { j++; if(j == nieuw_woord.size()){ eindpositie = i+1; break; } }
+		else { j = 0; }
+	}
+	if(eindpositie == 0) { return ""; }
+	
+	for(kint i = eindpositie; i < lijn.size() ; i++)
+	{
+		nieuw_woord += lijn[i];
+		if(lijn[i] == ')') { break; }
+	}
+	
+	return nieuw_woord;
+}
 
 string VindEnVervang(string lijn, definieer doosje)
 {
@@ -73,7 +149,7 @@ string VindEnVervang(string lijn, definieer doosje)
 	if(lijn.size() < trefwoord.size()) { return lijn; }
 	
 	string nieuwe_lijn = "";
-	for(int i = 0; i <= lijn.size(); i++)
+	for(kint i = 0; i <= lijn.size(); i++)
 	{
 		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
 		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
@@ -95,7 +171,7 @@ string VindEnVervang(string lijn, string trefwoord, string vervang_door)
 	if(lijn.size() < trefwoord.size()) { return lijn; }
 	
 	string nieuwe_lijn = "";
-	for(int i = 0; i <= lijn.size(); i++)
+	for(kint i = 0; i <= lijn.size(); i++)
 	{
 		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
 		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
@@ -116,31 +192,39 @@ int main(int argc, char* argv[])
 	if(argc >= 2) { ontbeest = atoi(argv[1]); }
 	
 	Vector<definieer> doosje;
+	Vector<definieer> doosje2;
 	
 	while(!cin.eof())
 	{
-		string code = "";
+		string code = "", macrowoord = "";
 		cout << "Geef een tekst: ";
 		getline(cin, code);
 		code = NegeerCommentaar(code);
 		if(ZitHerErin(code, "#define"))
 		{
-			log("if(ZitHerErin(code, \"#define\"))");
 			Vector<string> rij = split(code);
-			log("Vector<string> rij = split(code);");
-			if(rij.index(0) == "#define" && rij.size() == 3)
+			if(IsMacro(rij.index(1)))
+			{
+				rij.remove(0);
+				
+				string lichaam = "";
+				for(kint i = 1; i < rij.size(); i++)
+				{ lichaam += rij.index(i) + " "; }
+				
+				
+				doosje2.add(definieer(rij.index(0), lichaam));
+				continue;
+			}
+			else if(rij.index(0) == "#define" && rij.size() == 3)
 			{ doosje.add(definieer(rij.index(1),rij.index(2))); continue; }
 		}
 		else if(ZitHerErin(code, "#include"))
 		{
 			Vector<string> rij = split(code);
-			log("Komt de code hier?");
 			if(rij.index(0) == "#include" && rij.size() == 2)
 			{
 				string lijn = "";
-				cout << "string lijn = \"\";" << endl;
 				ifstream bestand(rij.get(1));
-				cout << "ifstream bestand(rij.get(1));" << endl;
 				if(bestand.is_open())
 				{
 					while(getline(bestand, lijn)) { cout << lijn << endl; }
@@ -155,6 +239,31 @@ int main(int argc, char* argv[])
 			for(kint i = 0; i < doosje.size(); i++)
 			{ code = VindEnVervang(code, doosje.get(i).trefwoord, doosje.get(i).vervang_door); }
 			
+			for(kint i = 0; i < doosje2.size(); i++)
+			{
+				string macronaam = ZuiverMacrowoord(doosje2.index(i).trefwoord);
+				if(Vind(code, macronaam))
+				{
+					string verkregen_macro = VerkrijgMacrowoord(code, macronaam);
+					string verkregen_macro_argumenten = MacroWaarde(verkregen_macro);
+					Vector<string> argumenten = split(verkregen_macro_argumenten, ' ', ',');
+					
+					string onze_macro = doosje2.index(i).trefwoord;
+					string onze_macro_argumenten = MacroWaarde(onze_macro);
+					Vector<string> onze_argumenten = split(onze_macro_argumenten, ' ', ',');
+					
+					string lichaam = doosje2.index(i).vervang_door;
+					if(argumenten.size() == onze_argumenten.size())
+					{
+						for(kint i = 0; i < argumenten.size(); i++)
+						{
+							lichaam = VindEnVervang(lichaam, onze_argumenten.index(i), argumenten.index(i));
+						}
+					}
+					
+					code = VindEnVervang(code, verkregen_macro, lichaam);
+				}
+			}
 			cout << code << endl;
 		}
 		

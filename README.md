@@ -1,3 +1,3 @@
 # wiering_vector
 
-Mark Wiering's vector class
+Mark Wiering's vector class.

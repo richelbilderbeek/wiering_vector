@@ -149,7 +149,7 @@ string VindEnVervang(string lijn, definieer doosje)
 	if(lijn.size() < trefwoord.size()) { return lijn; }
 	
 	string nieuwe_lijn = "";
-	for(kint i = 0; i <= lijn.size(); i++)
+	for(kint i = 0; i < lijn.size(); i++)
 	{
 		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
 		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
@@ -171,7 +171,7 @@ string VindEnVervang(string lijn, string trefwoord, string vervang_door)
 	if(lijn.size() < trefwoord.size()) { return lijn; }
 	
 	string nieuwe_lijn = "";
-	for(kint i = 0; i <= lijn.size(); i++)
+	for(kint i = 0; i < lijn.size(); i++)
 	{
 		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
 		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
@@ -197,7 +197,7 @@ int main(int argc, char* argv[])
 	while(!cin.eof())
 	{
 		string code = "", macrowoord = "";
-		cout << "Geef een tekst: ";
+		//cout << "Geef een tekst: ";
 		getline(cin, code);
 		code = NegeerCommentaar(code);
 		if(ZitHerErin(code, "#define"))
@@ -228,7 +228,7 @@ int main(int argc, char* argv[])
 				if(bestand.is_open())
 				{
 					while(getline(bestand, lijn)) { cout << lijn << endl; }
-					bestand.close();
+					bestand.close(); continue;
 				}
 				else { cout << "Kon " << rij.get(1) << " niet vinden!" << endl; }
 			}

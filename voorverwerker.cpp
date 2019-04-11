@@ -3,7 +3,6 @@
 #include "vector.h"
 #include "splitter.h"
 using namespace std;
-//#include "splitterTEMP.h"
 
 typedef unsigned short int kint;
 
@@ -151,11 +150,9 @@ string VindEnVervang(string lijn, definieer doosje)
 	string nieuwe_lijn = "";
 	for(kint i = 0; i < lijn.size(); i++)
 	{
-		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
 		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
 		{
 			string s = GeefDeelString(lijn, i, i+trefwoord.size()-1);
-			//cout << "s is " << s << endl;
 			if(s == trefwoord) { nieuwe_lijn += vervang_door; i += trefwoord.size()-1; }
 			else { nieuwe_lijn += lijn[i]; }
 		}
@@ -173,11 +170,9 @@ string VindEnVervang(string lijn, string trefwoord, string vervang_door)
 	string nieuwe_lijn = "";
 	for(kint i = 0; i < lijn.size(); i++)
 	{
-		//cout << "i: " << i << "\tlijn[i]: " << lijn[i] << endl;
 		if(lijn[i] == trefwoord[0] && lijn[i+trefwoord.size()-1] == trefwoord[trefwoord.size()-1])
 		{
 			string s = GeefDeelString(lijn, i, i+trefwoord.size()-1);
-			//cout << "s is " << s << endl;
 			if(s == trefwoord) { nieuwe_lijn += vervang_door; i += trefwoord.size()-1; }
 			else { nieuwe_lijn += lijn[i]; }
 		}
@@ -308,19 +303,7 @@ int main(int argc, char* argv[])
 			if(!negeren) { cout << code << endl; }
 		}
 		
-		
 	}
-	
-	while(!cin.eof())
-	{
-		string s = "";
-		cout << "Geef een tekst: ";
-		getline(cin, s);
-		s = NegeerCommentaar(s);
-		if(!LegeLijn(s))
-		{ cout << VindEnVervang(s, "Willem", "Sjaak") << endl << endl; }
-	}
-	//cout << GeefDeelString(s, 0, 4) << endl;
 	
 	return 0;
 }

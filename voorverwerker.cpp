@@ -291,9 +291,9 @@ int main(int argc, char* argv[])
 					string lichaam = doosje2.index(i).vervang_door;
 					if(argumenten.size() == onze_argumenten.size())
 					{
-						for(kint i = 0; i < argumenten.size(); i++)
+						for(kint j = 0; j < argumenten.size(); j++)
 						{
-							lichaam = VindEnVervang(lichaam, onze_argumenten.index(i), argumenten.index(i));
+							lichaam = VindEnVervang(lichaam, onze_argumenten.index(j), argumenten.index(j));
 						}
 					}
 					

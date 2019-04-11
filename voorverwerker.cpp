@@ -7,7 +7,7 @@ using namespace std;
 
 typedef unsigned short int kint;
 
-bool ontbeest = 1, in_commentaar = false;
+bool ontbeest = 1, in_commentaar = false, negeren = false;
 string VindEnVervang(string, string, string);
 
 void log(string tekst) { if(ontbeest) { cout << tekst << endl; } }
@@ -21,7 +21,7 @@ bool LegeLijn(string lijn)
 	return true;
 }
 
-bool ZitHerErin(string lijn, string argument)
+bool ZitHetErin(string lijn, string argument)
 {
 	for(kint i = 0, j = 0; i < lijn.size(); i++)
 	{
@@ -193,6 +193,7 @@ int main(int argc, char* argv[])
 	
 	Vector<definieer> doosje;
 	Vector<definieer> doosje2;
+	Vector<string> gedefinieerd;
 	
 	while(!cin.eof())
 	{
@@ -200,10 +201,15 @@ int main(int argc, char* argv[])
 		//cout << "Geef een tekst: ";
 		getline(cin, code);
 		code = NegeerCommentaar(code);
-		if(ZitHerErin(code, "#define"))
+		if(ZitHetErin(code, "#define"))
 		{
 			Vector<string> rij = split(code);
-			if(IsMacro(rij.index(1)))
+			if(rij.index(0) == "#define" && rij.size() >= 2)
+			{
+				gedefinieerd.add_unique(rij.index(1));
+			}
+			
+			if(rij.index(0) == "#define" && IsMacro(rij.index(1)))
 			{
 				rij.remove(0);
 				
@@ -216,9 +222,44 @@ int main(int argc, char* argv[])
 				continue;
 			}
 			else if(rij.index(0) == "#define" && rij.size() == 3)
-			{ doosje.add(definieer(rij.index(1),rij.index(2))); continue; }
+			{ doosje.add(definieer(rij.index(1),rij.index(2))); }
+			continue;
 		}
-		else if(ZitHerErin(code, "#include"))
+		else if(ZitHetErin(code, "#undef"))
+		{
+			Vector<string> rij = split(code);
+			if((rij.index(0) == "#undef" || rij.index(0) == "#undefine") && rij.size() == 2)
+			{
+				for(kint i = 0; i < doosje.size(); i++)
+				{ if(doosje.index(i).trefwoord == rij.index(1)) { doosje.remove(i); } }
+				
+				for(kint i = 0; i < doosje2.size(); i++)
+				{ if(doosje2.index(i).trefwoord == rij.index(1)) { doosje2.remove(i); } }
+				
+				gedefinieerd.removeAll(rij.index(1));
+			}
+			continue;
+		}
+		else if(ZitHetErin(code, "#ifdef"))
+		{
+			Vector<string> rij = split(code);
+			if(rij.index(0) == "#ifdef" && rij.size() == 2)
+			{
+				if(! gedefinieerd.contains(rij.index(1))) { negeren = true; }
+			}
+			continue;
+		}
+		else if(ZitHetErin(code, "#ifndef"))
+		{
+			Vector<string> rij = split(code);
+			if(rij.index(0) == "#ifndef" && rij.size() == 2)
+			{
+				if(gedefinieerd.contains(rij.index(1))) { negeren = true; }
+			}
+			continue;
+		}
+		else if(ZitHetErin(code, "#endif")) { negeren = false; continue; }
+		else if(ZitHetErin(code, "#include"))
 		{
 			Vector<string> rij = split(code);
 			if(rij.index(0) == "#include" && rij.size() == 2)
@@ -228,10 +269,10 @@ int main(int argc, char* argv[])
 				if(bestand.is_open())
 				{
 					while(getline(bestand, lijn)) { cout << lijn << endl; }
-					bestand.close(); continue;
+					bestand.close();
 				}
 				else { cout << "Kon " << rij.get(1) << " niet vinden!" << endl; }
-			}
+			} continue;
 		}
 		
 		if(!LegeLijn(code))
@@ -264,7 +305,7 @@ int main(int argc, char* argv[])
 					code = VindEnVervang(code, verkregen_macro, lichaam);
 				}
 			}
-			cout << code << endl;
+			if(!negeren) { cout << code << endl; }
 		}
 		
 		

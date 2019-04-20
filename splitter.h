@@ -5,7 +5,7 @@
 Vector<std::string> split(const std::string &code, char a = ' ', char b = '\t')
 {
 	Vector<std::string> v; std::string t = "";
-	for(short int f = 1; f <= code.size(); f++)
+	for(short int f = 1; f <= static_cast<short int>(code.size()); f++)
 	{
     assert(f - 1 >= 0);
     assert(f - 1 < static_cast<short int>(code.size()));

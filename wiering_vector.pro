@@ -12,36 +12,7 @@ QMAKE_CXXFLAGS += -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic -Werror
 # Debug and release settings
 CONFIG += debug_and_release
 CONFIG(release, debug|release) {
-
   DEFINES += NDEBUG
-
-  # GNU/Linux
-  unix:!macx {
-    # gprof
-    QMAKE_CXXFLAGS += -pg
-    QMAKE_LFLAGS += -pg
-
-    # helgrind, for helgrind and memcheck
-    QMAKE_LFLAGS += -pthread -Wl,--no-as-needed
-  }
-}
-
-CONFIG(debug, debug|release) {
-
-  # GNU/Linux
-  unix:!macx {
-    # gcov
-    QMAKE_CXXFLAGS += -fprofile-arcs -ftest-coverage
-    LIBS += -lgcov
-
-    # helgrind, for helgrind and memcheck
-    QMAKE_LFLAGS += -pthread -Wl,--no-as-needed
-
-    # UBSAN
-    QMAKE_CXXFLAGS += -fsanitize=undefined
-    QMAKE_LFLAGS += -fsanitize=undefined
-    LIBS += -lubsan
-  }
 }
 
 # High warning level, warnings are errors
@@ -50,9 +21,6 @@ QMAKE_CXXFLAGS += -Werror
 
 # Qt5
 QT += core gui
-
-# QResources give this error
-#QMAKE_CXXFLAGS += -Wno-unused-variable
 
 # Fixes
 #/usr/include/boost/math/constants/constants.hpp:277: error: unable to find numeric literal operator 'operator""Q'

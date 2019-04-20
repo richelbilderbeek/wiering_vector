@@ -57,7 +57,7 @@ bool IsMacro(string s)
 	}
 	
 	if(haakje_geopend && haakje_gesloten && p == 0) { return true; }
-	else { return false; }
+	return false;
 	
 }
 
@@ -68,7 +68,8 @@ string NegeerCommentaar(string lijn)
 	
 	for(kint i = 0; i < lijn.size(); i++)
 	{
-		if(lijn[i] == '"' && !in_commentaar) { in_citaat ? in_citaat = false: in_citaat = true; nieuwe_lijn += lijn[i]; }
+		if(lijn[i] == '"' && !in_commentaar)
+		{ in_citaat ? in_citaat = false: in_citaat = true; nieuwe_lijn += lijn[i]; }
 		else if(in_citaat) { nieuwe_lijn += lijn[i]; }
 		else if(lijn[i] == '/' && lijn[i+1] == '/') { return nieuwe_lijn; }
 		else if(lijn[i] == '/' && lijn[i+1] == '*') { in_commentaar = true; }
@@ -192,7 +193,7 @@ int main(int argc, char* argv[])
 	
 	while(!cin.eof())
 	{
-		string code = "", macrowoord = "";
+		string code = "";
 		//cout << "Geef een tekst: ";
 		getline(cin, code);
 		code = NegeerCommentaar(code);
